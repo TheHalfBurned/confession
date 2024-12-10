@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <link rel="stylesheet" href="new.css" />
+  </head>
+  <body>
+    <div class="content">
+      <img src="" alt="" />
+      <div class="text">
+        <p>
+          Hello Madam😄,
+          <br />
+          I remember the first time I saw you on the basketball court during my second semester. There was something about you—your energy, your focus—that instantly captured my attention. I didn’t know your name back then, but I felt something stir inside me, something I couldn’t quite explain. We were from different departments—you, studying Cyber Security, and me, a Cloud Tech major—but I couldn’t help but admire you from afar.
+By the time my third semester arrived, a small twist of fate brought us a little closer. A coding batch was formed, and when I saw your name on the list, I was overjoyed. The fact that I would be working alongside you made my heart race, but it was also a little nerve-wracking because, despite being in the same group, I didn’t know how to start a conversation.
+It was during this time that I slowly began talking to you, making friends with the people you hung out with, and, thanks to my friend Vaibhav, I was finally able to find a way to start a conversation. I remember every moment, every laugh, and every shared look. At first, I was just excited to know you better, but that all changed when we participated in the Smart India Hackathon.
+It wasn’t just about the hackathon itself.</p> 
+<p>
+We faced a lot of tough questions during the presentation, and you stood up for us with such grace and determination. You didn’t back down, even when things seemed difficult. It was then that I realized—what I had been feeling wasn’t just admiration. I had fallen for you, deeply, in that moment. I fell in love with how you fought for the team, how you took charge when everyone else was uncertain. That strength, that passion—everything about you captured my heart.
+Fast forward to mid-October, when my friend Vaibhav, always the prankster, got his hands on my phone. What started as a joke turned into a moment of honesty. I confessed my feelings to you, and although you didn’t feel the same way at the time, you were kind and open to talking to me. Since then, every day has been a journey of getting to know each other better, of building a bond I never imagined would grow this strong.
+You’ve been my pillar of support, Sneha. When I felt low, you lifted me up.</p>
+<p>
+You motivated me when I thought I had nothing left to give. And when you were going through your own struggles, I did my best to be there for you. There’s a quiet strength in our friendship, and I feel incredibly lucky to have you by my side.
+I know that right now, your dream is to be an independent woman, and I support that wholeheartedly. But I can’t deny that I picture a future where you and I are together, where we stand side by side as partners, pushing each other to be the best versions of ourselves. You are everything I’ve ever wanted in a person, and I hope that, one day, you might feel the same way about me.
+I call you ‘Madam’ as a playful joke, but to me, you are so much more than that. You are my inspiration, my friend, and the one who holds my heart.
+I don’t know what the future holds, but I do know that no matter what, you’ll always be a part of my journey.
+    </p>
+        <p>
+          With all my heart,</p>
+          Siddharth
+          </p>
+        <p>Miss You A Every Moment 🤞💖</p>
+      </div>
+    </div>
+    <h3>Swipe on screen to see the Secert Message</h3>
+    <canvas></canvas>
+
+    <script type="x-shader/x-fragment" id="vertShader">
+      precision highp float;
+
+        attribute vec2 aPosition;
+        varying vec2 vUv;
+        varying vec2 vL;
+        varying vec2 vR;
+        varying vec2 vT;
+        varying vec2 vB;
+        uniform vec2 u_vertex_texel;
+
+        void main () {
+            vUv = aPosition * .5 + .5;
+            vL = vUv - vec2(u_vertex_texel.x, 0.);
+            vR = vUv + vec2(u_vertex_texel.x, 0.);
+            vT = vUv + vec2(0., u_vertex_texel.y);
+            vB = vUv - vec2(0., u_vertex_texel.y);
+            gl_Position = vec4(aPosition, 0., 1.);
+        }
+    </script>
+
+    <script type="x-shader/x-fragment" id="fragShaderAdvection">
+      precision highp float;
+        precision highp sampler2D;
+
+        varying vec2 vUv;
+        uniform sampler2D u_velocity_txr;
+        uniform sampler2D u_input_txr;
+        uniform vec2 u_vertex_texel;
+        uniform vec2 u_output_textel;
+        uniform float u_dt;
+        uniform float u_dissipation;
+
+        vec4 bilerp (sampler2D sam, vec2 uv, vec2 tsize) {
+            vec2 st = uv / tsize - 0.5;
+
+            vec2 iuv = floor(st);
+            vec2 fuv = fract(st);
+
+            vec4 a = texture2D(sam, (iuv + vec2(0.5, 0.5)) * tsize);
+            vec4 b = texture2D(sam, (iuv + vec2(1.5, 0.5)) * tsize);
+            vec4 c = texture2D(sam, (iuv + vec2(0.5, 1.5)) * tsize);
+            vec4 d = texture2D(sam, (iuv + vec2(1.5, 1.5)) * tsize);
+
+            return mix(mix(a, b, fuv.x), mix(c, d, fuv.x), fuv.y);
+        }
+
+        void main () {
+            vec2 coord = vUv - u_dt * bilerp(u_velocity_txr, vUv, u_vertex_texel).xy * u_vertex_texel;
+            gl_FragColor = u_dissipation * bilerp(u_input_txr, coord, u_output_textel);
+            gl_FragColor.a = 1.;
+        }
+    </script>
+
+    <script type="x-shader/x-fragment" id="fragShaderDivergence">
+      precision highp float;
+        precision highp sampler2D;
+
+        varying highp vec2 vUv;
+        varying highp vec2 vL;
+        varying highp vec2 vR;
+        varying highp vec2 vT;
+        varying highp vec2 vB;
+        uniform sampler2D u_velocity_txr;
+
+        void main () {
+            float L = texture2D(u_velocity_txr, vL).x;
+            float R = texture2D(u_velocity_txr, vR).x;
+            float T = texture2D(u_velocity_txr, vT).y;
+            float B = texture2D(u_velocity_txr, vB).y;
+
+            float div = .5 * (R - L + T - B);
+            gl_FragColor = vec4(div, 0., 0., 1.);
+        }
+    </script>
+
+    <script type="x-shader/x-fragment" id="fragShaderPressure">
+      precision highp float;
+        precision highp sampler2D;
+
+        varying highp vec2 vUv;
+        varying highp vec2 vL;
+        varying highp vec2 vR;
+        varying highp vec2 vT;
+        varying highp vec2 vB;
+        uniform sampler2D u_pressure_txr;
+        uniform sampler2D u_divergence_txr;
+
+        void main () {
+            float L = texture2D(u_pressure_txr, vL).x;
+            float R = texture2D(u_pressure_txr, vR).x;
+            float T = texture2D(u_pressure_txr, vT).x;
+            float B = texture2D(u_pressure_txr, vB).x;
+            float C = texture2D(u_pressure_txr, vUv).x;
+            float divergence = texture2D(u_divergence_txr, vUv).x;
+            float pressure = (L + R + B + T - divergence) * 0.25;
+            gl_FragColor = vec4(pressure, 0., 0., 1.);
+        }
+    </script>
+
+    <script type="x-shader/x-fragment" id="fragShaderGradientSubtract">
+      precision highp float;
+        precision highp sampler2D;
+
+        varying highp vec2 vUv;
+        varying highp vec2 vL;
+        varying highp vec2 vR;
+        varying highp vec2 vT;
+        varying highp vec2 vB;
+        uniform sampler2D u_pressure_txr;
+        uniform sampler2D u_velocity_txr;
+
+        void main () {
+            float L = texture2D(u_pressure_txr, vL).x;
+            float R = texture2D(u_pressure_txr, vR).x;
+            float T = texture2D(u_pressure_txr, vT).x;
+            float B = texture2D(u_pressure_txr, vB).x;
+            vec2 velocity = texture2D(u_velocity_txr, vUv).xy;
+            velocity.xy -= vec2(R - L, T - B);
+            gl_FragColor = vec4(velocity, 0., 1.);
+        }
+    </script>
+
+    <script type="x-shader/x-fragment" id="fragShaderPoint">
+      precision highp float;
+        precision highp sampler2D;
+
+        varying vec2 vUv;
+        uniform sampler2D u_input_txr;
+        uniform float u_ratio;
+        uniform vec3 u_point_value;
+        uniform vec2 u_point;
+        uniform float u_point_size;
+
+        void main () {
+            vec2 p = vUv - u_point.xy;
+            p.x *= u_ratio;
+            vec3 splat = pow(2., -dot(p, p) / u_point_size) * u_point_value;
+            vec3 base = texture2D(u_input_txr, vUv).xyz;
+            gl_FragColor = vec4(base + splat, 1.);
+        }
+    </script>
+
+    <script type="x-shader/x-fragment" id="fragShaderDisplay">
+      precision highp float;
+        precision highp sampler2D;
+
+        varying vec2 vUv;
+        uniform sampler2D u_output_texture;
+
+        void main () {
+            vec3 C = texture2D(u_output_texture, vUv).rgb;
+            float a = max(C.r, max(C.g, C.b));
+            a = pow(.1 * a, .1);
+            a = clamp(a, 0., 1.);
+            gl_FragColor = vec4(1. - C, 1. - a);
+        }
+    </script>
+    <script src="untoldcodding.js"></script>
+  </body>
+</html>
